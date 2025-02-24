@@ -11,3 +11,6 @@ VALUES (
     NOW()
 )
 RETURNING *;
+
+-- name: GetUserWithUsername :one
+SELECT * FROM users WHERE username = $1;

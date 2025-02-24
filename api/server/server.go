@@ -5,12 +5,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/MudassirDev/all-in-one-business-tool/api/controllers"
 	"github.com/MudassirDev/all-in-one-business-tool/internal/database"
 	"github.com/MudassirDev/all-in-one-business-tool/models"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+)
+
+const (
+	JWTEXPIRINGTIME = 1 * time.Hour
 )
 
 func CreateServer() *http.Server {
@@ -20,6 +25,7 @@ func CreateServer() *http.Server {
 	}
 
 	dbUrl := os.Getenv("DB_URL")
+	secretKey := os.Getenv("JWT_SECRET_KEY")
 
 	if dbUrl == "" {
 		log.Fatal("DB url must not be empty")
@@ -35,11 +41,13 @@ func CreateServer() *http.Server {
 	queries := database.New(conn)
 
 	apiCfg := models.APICfg{
-		DB: queries,
+		DB:              queries,
+		JWTSecretKey:    secretKey,
+		JWTExpiringTime: JWTEXPIRINGTIME,
 	}
 
-	mux.HandleFunc("/register", controllers.CreateUserRegisterHandler(&apiCfg))
-	mux.HandleFunc("/login", controllers.CreateUserLoginHandler(&apiCfg))
+	mux.HandleFunc("POST /register", controllers.CreateUserRegisterHandler(&apiCfg))
+	mux.HandleFunc("POST /login", controllers.CreateUserLoginHandler(&apiCfg))
 
 	srv := &http.Server{
 		Addr:    ":8080",

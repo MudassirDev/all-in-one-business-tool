@@ -60,5 +60,49 @@ func CreateUserRegisterHandler(apiCfg *models.APICfg) http.HandlerFunc {
 }
 
 func CreateUserLoginHandler(apiCfg *models.APICfg) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {}
+	return func(w http.ResponseWriter, r *http.Request) {
+		type RequestParams struct {
+			Username string `json:"username"`
+			Password string `json:"password"`
+		}
+
+		var params RequestParams
+
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+			Json.RespondWithError(w, http.StatusBadRequest, "invalid parameters", err)
+			return
+		}
+
+		dbUser, err := apiCfg.DB.GetUserWithUsername(r.Context(), params.Username)
+		if err != nil {
+			Json.RespondWithError(w, http.StatusBadRequest, "no user found with this username", err)
+			return
+		}
+
+		err = auth.VerifyPassword(params.Password, dbUser.PasswordHash)
+		if err != nil {
+			Json.RespondWithError(w, http.StatusBadRequest, "wrong password", err)
+			return
+		}
+
+		token, err := auth.MakeJWT(dbUser.ID, apiCfg.JWTExpiringTime, apiCfg.JWTSecretKey)
+		if err != nil {
+			Json.RespondWithError(w, http.StatusInternalServerError, "failed to make session token", err)
+			return
+		}
+
+		cookie := http.Cookie{Name: "auth_token", Value: token}
+		http.SetCookie(w, &cookie)
+		Json.RespondWithJson(w, http.StatusOK, models.UserStruct{
+			ID:        dbUser.ID,
+			Email:     dbUser.Email,
+			Username:  dbUser.Username,
+			FirstName: dbUser.FirstName,
+			LastName:  dbUser.LastName,
+			CreatedAt: dbUser.CreatedAt,
+			UpdatedAt: dbUser.UpdatedAt,
+		})
+
+	}
 }

@@ -8,7 +8,9 @@ import (
 )
 
 type APICfg struct {
-	DB *database.Queries
+	DB              *database.Queries
+	JWTSecretKey    string
+	JWTExpiringTime time.Duration
 }
 
 type UserStruct struct {
