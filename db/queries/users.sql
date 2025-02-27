@@ -14,3 +14,6 @@ RETURNING *;
 
 -- name: GetUserWithUsername :one
 SELECT * FROM users WHERE username = $1;
+
+-- name: GetUserByID :one
+SELECT id, username, email, first_name, last_name, created_at, updated_at FROM users WHERE id = $1;

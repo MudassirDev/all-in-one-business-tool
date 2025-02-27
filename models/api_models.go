@@ -11,6 +11,7 @@ type APICfg struct {
 	DB              *database.Queries
 	JWTSecretKey    string
 	JWTExpiringTime time.Duration
+	AuthCookieName  string
 }
 
 type UserStruct struct {

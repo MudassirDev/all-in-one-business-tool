@@ -92,7 +92,7 @@ func CreateUserLoginHandler(apiCfg *models.APICfg) http.HandlerFunc {
 			return
 		}
 
-		cookie := http.Cookie{Name: "auth_token", Value: token}
+		cookie := http.Cookie{Name: apiCfg.AuthCookieName, Value: token}
 		http.SetCookie(w, &cookie)
 		Json.RespondWithJson(w, http.StatusOK, models.UserStruct{
 			ID:        dbUser.ID,

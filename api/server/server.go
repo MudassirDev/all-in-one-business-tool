@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MudassirDev/all-in-one-business-tool/api/controllers"
+	"github.com/MudassirDev/all-in-one-business-tool/api/middlewares"
 	"github.com/MudassirDev/all-in-one-business-tool/internal/database"
 	"github.com/MudassirDev/all-in-one-business-tool/models"
 	"github.com/joho/godotenv"
@@ -15,7 +16,8 @@ import (
 )
 
 const (
-	JWTEXPIRINGTIME = 1 * time.Hour
+	JWT_EXPIRATION_TIME = 1 * time.Hour
+	AUTH_COOKIE_NAME    = "auth_token"
 )
 
 func CreateServer() *http.Server {
@@ -43,9 +45,11 @@ func CreateServer() *http.Server {
 	apiCfg := models.APICfg{
 		DB:              queries,
 		JWTSecretKey:    secretKey,
-		JWTExpiringTime: JWTEXPIRINGTIME,
+		JWTExpiringTime: JWT_EXPIRATION_TIME,
+		AuthCookieName:  AUTH_COOKIE_NAME,
 	}
 
+	mux.HandleFunc("GET /", middlewares.AuthMiddleware(controllers.CreateIndexFileHandler(&apiCfg), &apiCfg))
 	mux.HandleFunc("POST /register", controllers.CreateUserRegisterHandler(&apiCfg))
 	mux.HandleFunc("POST /login", controllers.CreateUserLoginHandler(&apiCfg))
 
